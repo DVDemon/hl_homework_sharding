@@ -78,54 +78,126 @@ protected:
                 .required(false)
                 .repeatable(false)
                 .callback(OptionCallback<HTTPWebServer>(this, &HTTPWebServer::handleHelp)));
-       options.addOption(
+        options.addOption(
             Option("read", "r", "set ip address for read requests")
                 .required(false)
                 .repeatable(false)
                 .argument("value")
                 .callback(OptionCallback<HTTPWebServer>(this, &HTTPWebServer::handleReadIP)));
-       options.addOption(
+        options.addOption(
             Option("write", "w", "set ip address for write requests")
                 .required(false)
                 .repeatable(false)
                 .argument("value")
                 .callback(OptionCallback<HTTPWebServer>(this, &HTTPWebServer::handleWriteIP)));
-       options.addOption(
-            Option("init_db", "db", "create database tables")
+        options.addOption(
+            Option("port", "po", "set mysql port")
                 .required(false)
                 .repeatable(false)
-                .callback(OptionCallback<HTTPWebServer>(this, &HTTPWebServer::handleInitDB)));    
+                .argument("value")
+                .callback(OptionCallback<HTTPWebServer>(this, &HTTPWebServer::handlePort)));
+        options.addOption(
+            Option("login", "lg", "set mysql login")
+                .required(false)
+                .repeatable(false)
+                .argument("value")
+                .callback(OptionCallback<HTTPWebServer>(this, &HTTPWebServer::handleLogin)));
+        options.addOption(
+            Option("password", "pw", "set mysql password")
+                .required(false)
+                .repeatable(false)
+                .argument("value")
+                .callback(OptionCallback<HTTPWebServer>(this, &HTTPWebServer::handlePassword)));
+        options.addOption(
+            Option("database", "db", "set mysql database")
+                .required(false)
+                .repeatable(false)
+                .argument("value")
+                .callback(OptionCallback<HTTPWebServer>(this, &HTTPWebServer::handleDatabase)));
+        options.addOption(
+            Option("init_db", "it", "create database tables")
+                .required(false)
+                .repeatable(false)
+                .callback(OptionCallback<HTTPWebServer>(this, &HTTPWebServer::handleInitDB)));
     }
 
     void handleInitDB(const std::string &name,
-                    const std::string &value)
+                      const std::string &value)
     {
+
+        try
+        {
+            std::cout << "creating database ..." << std::endl;
+            std::string query = "CREATE DATABASE hl;";
+            database::Database_MySQL::get().execute(query);
+            std::cout << "creating database ... done" << std::endl;
+        }
+        catch (...)
+        {
+            std::cout << "creating database ... fail" << std::endl;
+        }
+
         database::Person::init();
         database::Friends::init();
         database::Chat::init();
 
+
+
+        UNUSED(name);
+        UNUSED(value);
+    }
+    void handleLogin(const std::string &name,
+                    const std::string &value)
+    {
+        std::cout << name << "=" << value << std::endl;
+        Config::get().login() = value;
+        UNUSED(name);
+        UNUSED(value);
+    }
+    void handlePassword(const std::string &name,
+                    const std::string &value)
+    {
+        std::cout << name << "=" << value << std::endl;
+        Config::get().password() = value;
+        UNUSED(name);
+        UNUSED(value);
+    }
+
+     void handleDatabase(const std::string &name,
+                    const std::string &value)
+    {
+        std::cout << name << "=" << value << std::endl;
+        Config::get().database() = value;
+        UNUSED(name);
+        UNUSED(value);
+    }   
+    void handlePort(const std::string &name,
+                    const std::string &value)
+    {
+        std::cout << name << "=" << value << std::endl;
+        Config::get().port() = value;
         UNUSED(name);
         UNUSED(value);
     }
 
     void handleReadIP(const std::string &name,
-                    const std::string &value)
+                      const std::string &value)
     {
         std::cout << name << "=" << value << std::endl;
-        Config::get().read_request_ip()=value;
+        Config::get().read_request_ip() = value;
         UNUSED(name);
         UNUSED(value);
     }
 
     void handleWriteIP(const std::string &name,
-                    const std::string &value)
+                       const std::string &value)
     {
         std::cout << name << "=" << value << std::endl;
-        Config::get().write_request_ip()=value;
+        Config::get().write_request_ip() = value;
         UNUSED(name);
         UNUSED(value);
     }
- 
+
     void handleHelp(const std::string &name,
                     const std::string &value)
     {

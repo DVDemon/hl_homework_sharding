@@ -99,7 +99,10 @@
                             for(auto s: friends) {
                                 Poco::JSON::Object::Ptr ptr = new Poco::JSON::Object();
                                 ptr->set("id",s.id);
-                                ptr->set("time",s.time);
+                                struct tm * timeinfo;
+                                timeinfo = localtime ( &s.time );
+                                std::string time_val = (const char*)asctime (timeinfo);
+                                ptr->set("time",time_val);
                                 ptr->set("source_login",s.source_login);
                                 ptr->set("destination_login",s.destination_login);
                                 ptr->set("message",s.message);
@@ -107,7 +110,8 @@
                                 arr.add(ptr);   
                             }      
                             Poco::JSON::Stringifier::stringify(arr,ostr);
-                        }catch(...){
+                        }catch(std::exception &ex){
+                            std::cout << "exception:" << ex.what() << std::endl;
                         }
                     } 
                 } else
@@ -115,7 +119,6 @@
                    && form.has("add")
                    && form.has("destination")
                    && form.has("message")){
-                    std::cout << "add chat" << std::endl;
                     std::string session_str=form.get("session_id"); 
                     long  session_id = stol(session_str);
 

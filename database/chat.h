@@ -49,7 +49,7 @@ namespace database{
                 query += login;
                 query += "' OR destination_login='";
                 query += login;
-                query += "';";
+                query += "'  ORDER BY time DESC;";
                 database::Database_MySQL::get().query(query,[&](int ,int column,std::string value)
                 {
                         switch(column){
@@ -81,7 +81,7 @@ namespace database{
                 query += login2;
                 query += "' AND destination_login='";
                 query += login1;
-                query += "');";
+                query += "') ORDER BY time DESC;";
                 database::Database_MySQL::get().query(query,[&](int ,int column,std::string value)
                 {
                         switch(column){

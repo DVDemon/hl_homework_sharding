@@ -1,0 +1,10 @@
+pip==20.1.1
+pip-review==1.1.0
+setuptools==46.3.0
+pytest==5.4.1
+flake8==3.7.9
+yapf==0.30.0
+coverage==5.1
+click==7.1.2
+PyMySQL==0.9.3
+Faker==4.1.1

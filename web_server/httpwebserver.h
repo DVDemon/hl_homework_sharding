@@ -125,23 +125,9 @@ protected:
                       const std::string &value)
     {
 
-        try
-        {
-            std::cout << "creating database ..." << std::endl;
-            std::string query = "CREATE DATABASE hl;";
-            database::Database_MySQL::get().execute(query);
-            std::cout << "creating database ... done" << std::endl;
-        }
-        catch (...)
-        {
-            std::cout << "creating database ... fail" << std::endl;
-        }
-
         database::Person::init();
         database::Friends::init();
         database::Chat::init();
-
-
 
         UNUSED(name);
         UNUSED(value);

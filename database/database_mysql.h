@@ -52,6 +52,7 @@ namespace database{
                 void execute(std::string& query);
                 static Database_MySQL& get();
                 static std::string get_version();
+                void create_database(ConnectionType ct);
                 ~Database_MySQL();
     };
 }

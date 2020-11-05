@@ -1,63 +1,70 @@
-# Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+# Описание 
 
 
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
+Для хранения диалогов между пользователями используется таблица:
 
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
+CREATE TABLE `chat` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `time` datetime NOT NULL,
+  `source_login` varchar(256) NOT NULL,
+  `destination_login` varchar(256) NOT NULL,
+  `message` varchar(1024) DEFAULT NULL,
+  `readed` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `source` (`source_login`),
+  KEY `destination` (`destination_login`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=latin1;
 
-# Installation and Dependancy
+В ней храняться сообщения от пользователя к пользователю.
 
-## Install Cmake
-sudo apt-get install gcc
-sudo apt-get install g++
-sudo apt-get install cmake
+Делаем sharding на два сервера. Идея - сделать равномерное распределение по парам source_login - destination_login. Для этого конкатинируем логины и высчитываем hash (сумму символов). Записи с четными хэщами посылаем на первый сервер, с нечетными на второй.
 
-## Install OpenSSL
-sudo apt-get install libssl-dev
+В программе в SQL запросы добавляем комментарий с номером (' -- shardind:0' или ' -- sharding:1'). Если понадобится сможем сделать шардинг на сколько угодно серверов.
 
-## zlib
-sudo apt-get install zlib1g-dev
+## Пример кода вставки
 
-## mysql
-sudo apt-get install mysql-server
-sudo apt-get install mysql-client
-sudo apt-get install libmysqlclient-dev
+void insert()
+        {
+            std::string query = "INSERT INTO chat  (time,source_login,destination_login,message,readed) VALUES(";
+            query += "FROM_UNIXTIME(" + std::to_string(time) + "),";
+            query += "'" + source_login + "',";
+            query += "'" + destination_login + "',";
+            query += "'" + message + "',";
+            query += "'" + std::to_string(readed) + "'";
+            query += ") -- sharding:";
+            query +=std::to_string(get_sharding_hint(source_login, destination_login));
+            database::Database_MySQL::get().execute(query);
+        }
 
-## Install poco
-git clone -b master https://github.com/pocoproject/poco.git
-cd poco
-mkdir cmake-build
-cd cmake-build
-cmake ..
-cmake --build . --config Release
-sudo cmake --build . --target install
+где количество шардов вычисляется как 
+static size_t get_sharding_hint(const std::string &lhv, const std::string &rhv)
+        {
+            size_t result{};
+            for (auto c : lhv)
+                result += c;
+            for (auto c : rhv)
+                result += c;
+            return result % 2;
+        }
 
-## Install gtest
-sudo apt-get install libgtest-dev
-cd /usr/src/gtest/
-sudo cmake -DBUILD_SHARED_LIBS=ON
-sudo make
-sudo cp *.so /usr/lib
+# конфиг proxySQL
 
-## Update Library Cache
-sudo ldconfig
+mysql_query_rules:
+(
+    {
+        rule_id=1
+        active=1
+        match_pattern="-- sharding:0"
+        destination_hostgroup=0
+        apply=1
+    },
+    {
+        rule_id=2
+        active=1
+        match_pattern="-- sharding:1"
+        destination_hostgroup=1
+        apply=1
+    },
+)
 
-## Don't forget to start mysql
-sudo mysql_secure_installation utility
-sudo systemctl start mysql
-sudo systemctl enable mysql
-
-## MySQL configuration hints
-/etc/mysql/mysql.conf.d/mysqld.cnf:
-skip-grant-tables
-bind-address		= 127.0.0.1 ( The default. )
-bind-address		= XXX.XXX.XXX.XXX ( The ip address of your Public Net interface. )
-bind-address		= ZZZ.ZZZ.ZZZ.ZZZ ( The ip address of your Service Net interface. )
-bind-address		= 0.0.0.0 ( All ip addresses. )
-
-Access from other machines:
-CREATE USER 'root'@'%' IDENTIFIED BY 'some_pass';
-GRANT ALL PRIVILEGES ON *.* TO 'root'@'%';
+наверное одно из правил избыточное, но добавил "для красоты"
